@@ -155,8 +155,13 @@ async function run() {
       page.getByRole("heading", { name: "No matching tasks" }),
     ).toBeVisible();
     await page.getByRole("button", { name: "Clear filters" }).click();
+    await expect(page).toHaveURL(`${base}#/tasks`);
+    await expect(page.getByLabel("Search tasks")).toHaveValue("");
+    await expect(page.getByLabel("Filter by status")).toHaveValue("");
+    await expect(page.getByLabel("Filter by priority")).toHaveValue("");
+    await expect(page.locator(".task-card")).toHaveCount(10);
     await page.getByLabel("Search tasks").fill("Task 02");
-    await expect(page).toHaveURL(/q=Task\+02/);
+    await expect(page).toHaveURL(`${base}#/tasks?q=Task+02`);
     await expect(page.locator(".task-card")).toHaveCount(1);
     await page.reload();
     await expect(page.getByLabel("Search tasks")).toHaveValue("Task 02");
