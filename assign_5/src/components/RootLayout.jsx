@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { ChevronRight, ListTodo, Menu } from "lucide-react";
+import { ChevronRight, ListTodo, LogIn, Menu } from "lucide-react";
 import NavBar from "./NavBar.jsx";
 export default function RootLayout() {
   const [mobile, setMobile] = useState(false);
@@ -77,7 +77,15 @@ export default function RootLayout() {
             <ChevronRight size={13} />
             <strong>{title}</strong>
           </div>
-          <span>Make a little progress.</span>
+          <Link
+            className="login-link"
+            to="/login"
+            aria-current={location.pathname === "/login" ? "page" : undefined}
+            onClick={() => setMobile(false)}
+          >
+            <LogIn size={16} />
+            Login
+          </Link>
         </header>
         <main id="main-content" tabIndex={-1}>
           <Outlet />

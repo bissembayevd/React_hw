@@ -133,6 +133,23 @@ async function run() {
     errors.length = 0;
     await page.goto(`${base}#/tasks`);
     await expect(page.locator(".task-card")).toHaveCount(10);
+    const sidebar = page.getByRole("navigation", { name: "Main navigation" });
+    for (const label of ["In Progress", "Completed", "All Tasks"]) {
+      await sidebar.getByRole("link", { name: label, exact: true }).click();
+      await expect(sidebar.locator(".nav-item.active")).toHaveCount(1);
+      await expect(sidebar.locator(".nav-item.active")).toHaveText(label);
+      await expect(sidebar.locator('[aria-current="page"]')).toHaveCount(1);
+    }
+    await page.goBack();
+    await expect(sidebar.locator(".nav-item.active")).toHaveText("Completed");
+    await page.goForward();
+    await expect(sidebar.locator(".nav-item.active")).toHaveText("All Tasks");
+    await expect(
+      sidebar.getByRole("link", { name: "Login", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.locator(".topbar").getByRole("link", { name: "Login", exact: true }),
+    ).toBeVisible();
     await page.getByLabel("Tasks per page").selectOption("20");
     await expect(page.locator(".task-card")).toHaveCount(20);
     await expect(page).toHaveURL(/size=20/);
@@ -327,6 +344,16 @@ async function run() {
       page.getByRole("heading", { name: "Welcome to TaskSpace", exact: true }),
     ).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
+    await expect(
+      page.locator(".topbar").getByRole("link", { name: "Login", exact: true }),
+    ).toBeVisible();
+    await page
+      .locator(".topbar")
+      .getByRole("link", { name: "Login", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Login", exact: true }),
+    ).toBeVisible();
     await page
       .getByRole("button", { name: "Open navigation", exact: true })
       .click();
