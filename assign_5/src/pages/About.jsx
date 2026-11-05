@@ -20,12 +20,8 @@ export default function About() {
         <h2>Where your data lives</h2>
         <p>
           Tasks and owner profiles load from{" "}
-          <a
-            href="https://jsonplaceholder.typicode.com/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            JSONPlaceholder
+          <a href="https://dummyjson.com/" target="_blank" rel="noreferrer">
+            DummyJSON
           </a>
           . This public demonstration API acknowledges writes without
           permanently storing them. TaskSpace keeps successful changes in this

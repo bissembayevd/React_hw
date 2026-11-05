@@ -1,4 +1,4 @@
-const BASE = "https://jsonplaceholder.typicode.com";
+const BASE = "https://dummyjson.com";
 const KEY = "taskspace.assignment5.changes.v1";
 const pending = new Set();
 export const statuses = ["To Do", "In Progress", "Completed"];
@@ -32,7 +32,7 @@ function changes() {
 function normalize(todo, user) {
   return {
     id: String(todo.id),
-    title: todo.title,
+    title: todo.todo,
     status: todo.completed ? "Completed" : "To Do",
     priority: "Medium",
     category: "Personal",
@@ -41,17 +41,21 @@ function normalize(todo, user) {
     createdDate: "",
     completedAt: null,
     userId: todo.userId,
-    owner: user?.name || "Unassigned",
+    owner:
+      [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+      "Unassigned",
     username: user?.username || "",
     email: user?.email || "",
     company: user?.company?.name || "",
   };
 }
 export async function getTasks(signal) {
-  const [todos, users] = await Promise.all([
-    request("/todos", { signal }),
-    request("/users", { signal }),
+  const [taskData, userData] = await Promise.all([
+    request("/todos?limit=0", { signal }),
+    request("/users?limit=0", { signal }),
   ]);
+  const todos = taskData.todos;
+  const users = userData.users;
   if (!Array.isArray(todos) || !Array.isArray(users))
     throw new Error("The API returned invalid task data.");
   const saved = changes();
@@ -138,10 +142,10 @@ export function createTask(data) {
       email: "",
       company: "",
     });
-    await request("/todos", {
+    await request("/todos/add", {
       method: "POST",
       body: JSON.stringify({
-        title: task.title,
+        todo: task.title,
         completed: false,
         userId: task.userId,
       }),
@@ -172,11 +176,11 @@ export function updateTask(task, data) {
           : task.completedAt,
     });
     await request(
-      task.id.startsWith("local-") ? "/todos" : `/todos/${task.id}`,
+      task.id.startsWith("local-") ? "/todos/add" : `/todos/${task.id}`,
       {
         method: task.id.startsWith("local-") ? "POST" : "PATCH",
         body: JSON.stringify({
-          title: updated.title,
+          todo: updated.title,
           completed: updated.status === "Completed",
           userId: task.userId,
         }),

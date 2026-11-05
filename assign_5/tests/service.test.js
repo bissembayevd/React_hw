@@ -5,20 +5,22 @@ import { readView, taskView, summarize } from "../src/services/taskViews.js";
 const originalFetch = globalThis.fetch;
 const values = new Map();
 const todos = [
-  { id: 1, title: "Read notes", completed: false, userId: 1 },
-  { id: 2, title: "Build portfolio", completed: true, userId: 2 },
+  { id: 1, todo: "Read notes", completed: false, userId: 1 },
+  { id: 2, todo: "Build portfolio", completed: true, userId: 2 },
 ];
 const users = [
   {
     id: 1,
-    name: "Ada",
+    firstName: "Ada",
+    lastName: "",
     username: "ada",
     email: "ada@example.com",
     company: { name: "Study" },
   },
   {
     id: 2,
-    name: "Lin",
+    firstName: "Lin",
+    lastName: "",
     username: "lin",
     email: "lin@example.com",
     company: { name: "Work" },
@@ -34,10 +36,16 @@ beforeEach(() => {
     if (options.signal?.aborted)
       throw new DOMException("Aborted", "AbortError");
     const path = new URL(url).pathname;
+    if (options.method && options.method !== "DELETE") {
+      const payload = JSON.parse(options.body);
+      assert.equal(typeof payload.todo, "string");
+      assert.equal(Object.hasOwn(payload, "title"), false);
+      if (options.method === "POST") assert.equal(path, "/todos/add");
+    }
     let data = {};
     if (!options.method) {
-      if (path === "/todos") data = todos;
-      else if (path === "/users") data = users;
+      if (path === "/todos") data = { todos };
+      else if (path === "/users") data = { users };
       else if (path.startsWith("/todos/"))
         data = todos.find((item) => item.id === Number(path.split("/").at(-1)));
       else
@@ -197,4 +205,29 @@ test("all sorting modes and independent filters preserve pagination boundaries",
   assert.equal(last.tasks.length, 5);
   assert.equal(last.pages, 3);
   assert.equal(taskView(many, { ...view, size: 20 }).tasks.length, 20);
+});
+test("changing the remote data source preserves existing saved edits and created tasks", async () => {
+  const [task] = await service.getTasks();
+  const saved = {
+    ...task,
+    title: "My saved English task",
+    description: "Keep my notes",
+    priority: "High",
+  };
+  const local = {
+    ...saved,
+    id: "local-12345678-1234-1234-1234-123456789abc",
+    title: "My own task",
+  };
+  values.set(
+    "taskspace.assignment5.changes.v1",
+    JSON.stringify({
+      tasks: { [saved.id]: saved, [local.id]: local },
+      deleted: ["2"],
+    }),
+  );
+  const tasks = await service.getTasks();
+  assert.deepEqual(tasks, [saved, local]);
+  assert.deepEqual(await service.getTaskById(saved.id), saved);
+  assert.deepEqual(await service.getTaskById(local.id), local);
 });

@@ -43,20 +43,22 @@ const server = http.createServer(async (req, res) => {
 const todos = Array.from({ length: 25 }, (_, i) => ({
   id: i + 1,
   userId: (i % 2) + 1,
-  title: `Task ${String(i + 1).padStart(2, "0")}`,
+  todo: `Task ${String(i + 1).padStart(2, "0")}`,
   completed: i % 3 === 0,
 }));
 const users = [
   {
     id: 1,
-    name: "Ada",
+    firstName: "Ada",
+    lastName: "",
     username: "ada",
     email: "ada@example.com",
     company: { name: "Study" },
   },
   {
     id: 2,
-    name: "Lin",
+    firstName: "Lin",
+    lastName: "",
     username: "lin",
     email: "lin@example.com",
     company: { name: "Work" },
@@ -79,13 +81,23 @@ async function run() {
     if (message.type() === "error") errors.push(message.text());
   });
   try {
+    const liveResponse = page.waitForResponse(
+      (response) =>
+        response.url().startsWith("https://dummyjson.com/todos?") &&
+        response.ok(),
+    );
     await page.goto(`${base}#/tasks`);
     await expect(page.locator(".task-card")).toHaveCount(10, {
       timeout: 30000,
     });
-    await expect(page.locator(".result-count")).toHaveText("200 tasks");
+    const liveTasks = await (await liveResponse).json();
+    await expect(page.locator(".result-count")).toHaveText(
+      `${liveTasks.todos.length} tasks`,
+    );
+    const latest = [...liveTasks.todos].sort((a, b) => b.id - a.id)[0];
+    await expect(page.locator(".task-title").first()).toHaveText(latest.todo);
     await page.locator(".task-title").first().click();
-    await expect(page.locator(".property")).toHaveCount(12);
+    await expect(page.locator(".property")).toHaveCount(12, { timeout: 30000 });
     await expect(
       page.locator(".property").filter({ hasText: "Owner" }).first(),
     ).toBeVisible();
@@ -94,33 +106,30 @@ async function run() {
     );
     let fail = false;
     let slow = false;
-    await context.route(
-      "https://jsonplaceholder.typicode.com/**",
-      async (route) => {
-        const request = route.request();
-        const pathname = new URL(request.url()).pathname;
-        if (slow && pathname === "/todos/1")
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-        if (fail && pathname === "/todos") {
-          await route.fulfill({ status: 503, json: { error: "Unavailable" } });
-          return;
-        }
-        let data = {};
-        if (request.method() === "GET") {
-          if (pathname === "/todos") data = todos;
-          else if (pathname === "/users") data = users;
-          else if (pathname.startsWith("/todos/"))
-            data = todos.find(
-              (todo) => todo.id === Number(pathname.split("/").at(-1)),
-            );
-          else
-            data = users.find(
-              (user) => user.id === Number(pathname.split("/").at(-1)),
-            );
-        }
-        await route.fulfill({ status: data ? 200 : 404, json: data || {} });
-      },
-    );
+    await context.route("https://dummyjson.com/**", async (route) => {
+      const request = route.request();
+      const pathname = new URL(request.url()).pathname;
+      if (slow && pathname === "/todos/1")
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      if (fail && pathname === "/todos") {
+        await route.fulfill({ status: 503, json: { error: "Unavailable" } });
+        return;
+      }
+      let data = {};
+      if (request.method() === "GET") {
+        if (pathname === "/todos") data = { todos };
+        else if (pathname === "/users") data = { users };
+        else if (pathname.startsWith("/todos/"))
+          data = todos.find(
+            (todo) => todo.id === Number(pathname.split("/").at(-1)),
+          );
+        else
+          data = users.find(
+            (user) => user.id === Number(pathname.split("/").at(-1)),
+          );
+      }
+      await route.fulfill({ status: data ? 200 : 404, json: data || {} });
+    });
     errors.length = 0;
     await page.goto(`${base}#/tasks`);
     await expect(page.locator(".task-card")).toHaveCount(10);
