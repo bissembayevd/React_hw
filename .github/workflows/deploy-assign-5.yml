@@ -1,16 +1,14 @@
-name: Deploy Assignment 5
+name: Deploy TaskSpace assignments
 
 on:
   push:
     branches: [master]
     paths:
+      - "assign_4/**"
       - "assign_5/**"
+      - "assign_6/**"
       - ".github/workflows/deploy-assign-5.yml"
   workflow_dispatch:
-  workflow_run:
-    workflows: [Deploy TaskSpace]
-    types: [completed]
-    branches: [master]
 
 permissions:
   contents: read
@@ -21,11 +19,8 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/master' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: assign_5
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -37,32 +32,49 @@ jobs:
           cache-dependency-path: |
             assign_4/package-lock.json
             assign_5/package-lock.json
-      - name: Install Assignment 5 dependencies
-        run: npm ci
-      - name: Lint Assignment 5
-        run: npm run lint
-      - name: Test Assignment 5
-        run: npm test
-      - name: Build Assignment 5
+            assign_6/package-lock.json
+      - name: Build and test Assignment 4
+        working-directory: assign_4
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Build and test Assignment 5
+        working-directory: assign_5
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run build
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - name: Install and test Assignment 6
+        working-directory: assign_6
+        run: |
+          npm ci
+          npm run lint
+          npm test
+      - name: Build Assignment 6
+        working-directory: assign_6
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
         run: npm run build
-      - name: Install browser
-        run: npx playwright install --with-deps chromium
-      - name: Test production routes
-        run: npm run test:browser
-      - name: Build existing site in an isolated directory
-        working-directory: .
+      - name: Test Assignment 6 production routes
+        working-directory: assign_6
         run: |
-          mkdir -p "$RUNNER_TEMP/taskspace-assign4"
-          cp -R assign_4/. "$RUNNER_TEMP/taskspace-assign4/"
-          npm ci --prefix "$RUNNER_TEMP/taskspace-assign4"
-          npm test --prefix "$RUNNER_TEMP/taskspace-assign4"
-          npm run build --prefix "$RUNNER_TEMP/taskspace-assign4"
-      - name: Assemble both sites
-        working-directory: .
+          npx playwright install chromium
+          npm run test:browser
+      - name: Assemble Pages artifact
         run: |
-          mkdir -p "$RUNNER_TEMP/taskspace-pages/assign_5"
-          cp -R "$RUNNER_TEMP/taskspace-assign4/dist/." "$RUNNER_TEMP/taskspace-pages/"
+          mkdir -p "$RUNNER_TEMP/taskspace-pages/assign_5" "$RUNNER_TEMP/taskspace-pages/assign_6"
+          cp -R assign_4/dist/. "$RUNNER_TEMP/taskspace-pages/"
           cp -R assign_5/dist/. "$RUNNER_TEMP/taskspace-pages/assign_5/"
+          cp -R assign_6/dist/. "$RUNNER_TEMP/taskspace-pages/assign_6/"
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
@@ -76,7 +88,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}assign_5/
+      url: ${{ steps.deployment.outputs.page_url }}assign_6/
     steps:
       - name: Configure Pages
         uses: actions/configure-pages@v6
