@@ -350,6 +350,7 @@ async function run() {
     }
     await signUp.click();
     await expect(page).toHaveURL(`${base}#/signup`);
+    await expect(page.getByRole("heading", { name: "Signup", exact: true })).toBeVisible();
     await page.getByLabel("Email", { exact: true }).fill("student@example.com");
     await page.getByLabel("Password", { exact: true }).fill("short");
     await page.getByRole("button", { name: "Create account", exact: true }).click();

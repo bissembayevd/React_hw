@@ -8,6 +8,7 @@ on:
       - "assign_5/**"
       - "assign_6/**"
       - ".github/workflows/deploy-assign-5.yml"
+      - ".github/workflows/build-taskspace-pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,65 +21,14 @@ concurrency:
 jobs:
   build:
     if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-          cache: npm
-          cache-dependency-path: |
-            assign_4/package-lock.json
-            assign_5/package-lock.json
-            assign_6/package-lock.json
-      - name: Build and test Assignment 4
-        working-directory: assign_4
-        run: |
-          npm ci
-          npm test
-          npm run build
-      - name: Build and test Assignment 5
-        working-directory: assign_5
-        run: |
-          npm ci
-          npm run lint
-          npm test
-          npm run build
-          npx playwright install --with-deps chromium
-          npm run test:browser
-      - name: Install and test Assignment 6
-        working-directory: assign_6
-        run: |
-          npm ci
-          npm run lint
-          npm test
-      - name: Build Assignment 6
-        working-directory: assign_6
-        env:
-          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
-        run: npm run build
-      - name: Test Assignment 6 production routes
-        working-directory: assign_6
-        run: |
-          npx playwright install chromium
-          npm run test:browser
-      - name: Assemble Pages artifact
-        run: |
-          mkdir -p "$RUNNER_TEMP/taskspace-pages/assign_5" "$RUNNER_TEMP/taskspace-pages/assign_6"
-          cp -R assign_4/dist/. "$RUNNER_TEMP/taskspace-pages/"
-          cp -R assign_5/dist/. "$RUNNER_TEMP/taskspace-pages/assign_5/"
-          cp -R assign_6/dist/. "$RUNNER_TEMP/taskspace-pages/assign_6/"
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: ${{ runner.temp }}/taskspace-pages
+    uses: ./.github/workflows/build-taskspace-pages.yml
+    secrets:
+      VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
 
   deploy:
     needs: build

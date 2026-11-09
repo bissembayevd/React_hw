@@ -49,7 +49,7 @@ npm run dev
 
 ## GitHub Pages
 
-1. В репозитории откройте **Settings → Secrets and variables → Actions → Variables**. Создайте шесть repository variables с точными именами из таблицы Firebase. Workflow передаёт их в Vite во время сборки Assignment 6.
+1. В репозитории откройте **Settings → Secrets and variables → Actions → Variables**. Создайте шесть repository variables с точными именами из таблицы Firebase. Workflow передаёт их в Vite через защищённые параметры вызываемой сборки, чтобы значения маскировались в журнале GitHub Actions.
 2. В **Settings → Pages → Build and deployment** выберите **GitHub Actions**.
 3. Когда изменения окажутся в ветке `master`, workflow **Deploy TaskSpace assignments** соберёт один артефакт для всех заданий. Assignment 4 остаётся по адресу [`/React_hw/`](https://bissembayevd.github.io/React_hw/), Assignment 5 по адресу [`/React_hw/assign_5/`](https://bissembayevd.github.io/React_hw/assign_5/), Assignment 6 по адресу [`/React_hw/assign_6/`](https://bissembayevd.github.io/React_hw/assign_6/).
 
