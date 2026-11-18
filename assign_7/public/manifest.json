@@ -1,0 +1,22 @@
+{
+  "name": "TaskSpace",
+  "short_name": "TaskSpace",
+  "id": "/React_hw/assign_7/",
+  "start_url": "./#/",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#f7f7f5",
+  "background_color": "#f7f7f5",
+  "icons": [
+    {
+      "src": "icons/taskspace-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/taskspace-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

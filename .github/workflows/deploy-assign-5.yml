@@ -7,6 +7,8 @@ on:
       - "assign_4/**"
       - "assign_5/**"
       - "assign_6/**"
+      - "assign_7/**"
+      - ".github/retire-assign6-sw.js"
       - ".github/workflows/deploy-assign-5.yml"
       - ".github/workflows/build-taskspace-pages.yml"
   workflow_dispatch:
@@ -38,7 +40,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}assign_6/
+      url: ${{ steps.deployment.outputs.page_url }}assign_7/
     steps:
       - name: Configure Pages
         uses: actions/configure-pages@v6
